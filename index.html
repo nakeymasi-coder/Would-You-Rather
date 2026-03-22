@@ -1,0 +1,2185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Would-You-Rather Generator</title>
+  <style>
+    :root{
+      --bg-1:#0f172a;
+      --bg-2:#1e1b4b;
+      --bg-3:#111827;
+      --card:rgba(255,255,255,0.12);
+      --card-strong:rgba(255,255,255,0.18);
+      --stroke:rgba(255,255,255,0.18);
+      --text:#f8fafc;
+      --muted:#cbd5e1;
+      --accent:#8b5cf6;
+      --accent-2:#06b6d4;
+      --accent-3:#ec4899;
+      --good:#22c55e;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+      --shadow:0 20px 50px rgba(0,0,0,.35);
+      --radius:24px;
+      --radius-sm:18px;
+      --blur:18px;
+      --max:1200px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0}
+    body{
+      min-height:100vh;
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 10% 20%, rgba(139,92,246,.25), transparent 22%),
+        radial-gradient(circle at 90% 15%, rgba(6,182,212,.18), transparent 22%),
+        radial-gradient(circle at 80% 80%, rgba(236,72,153,.18), transparent 25%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2) 45%, var(--bg-3));
+      overflow-x:hidden;
+    }
+
+    body::before,
+    body::after{
+      content:"";
+      position:fixed;
+      inset:auto;
+      width:320px;
+      height:320px;
+      border-radius:50%;
+      filter:blur(80px);
+      opacity:.18;
+      pointer-events:none;
+      z-index:0;
+      animation:floatBlob 10s ease-in-out infinite;
+    }
+    body::before{
+      background:#8b5cf6;
+      top:5%;
+      left:-80px;
+    }
+    body::after{
+      background:#06b6d4;
+      right:-80px;
+      bottom:8%;
+      animation-delay:-4s;
+    }
+
+    @keyframes floatBlob{
+      0%,100%{transform:translateY(0) translateX(0) scale(1)}
+      50%{transform:translateY(-20px) translateX(12px) scale(1.06)}
+    }
+
+    .app{
+      position:relative;
+      z-index:1;
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:20;
+      backdrop-filter:blur(16px);
+      background:rgba(10,15,30,.45);
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+
+    .topbar-inner{
+      width:min(var(--max), calc(100% - 24px));
+      margin:0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:14px 0;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+    }
+
+    .brand-badge{
+      width:44px;
+      height:44px;
+      border-radius:14px;
+      background:linear-gradient(135deg, var(--accent), var(--accent-2));
+      display:grid;
+      place-items:center;
+      box-shadow:var(--shadow);
+      font-size:22px;
+    }
+
+    .brand-text{
+      min-width:0;
+    }
+
+    .brand-title{
+      margin:0;
+      font-size:1rem;
+      font-weight:800;
+      letter-spacing:.02em;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .brand-sub{
+      margin:2px 0 0;
+      font-size:.82rem;
+      color:var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .top-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .shell{
+      width:min(var(--max), calc(100% - 24px));
+      margin:20px auto 40px;
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      gap:20px;
+    }
+
+    .screen{
+      display:none;
+      animation:fadeIn .45s ease;
+    }
+
+    .screen.active{
+      display:block;
+    }
+
+    @keyframes fadeIn{
+      from{opacity:0;transform:translateY(12px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+
+    .glass{
+      background:var(--card);
+      border:1px solid var(--stroke);
+      backdrop-filter:blur(var(--blur));
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+    }
+
+    .hero{
+      overflow:hidden;
+      position:relative;
+      padding:28px;
+    }
+
+    .hero-grid{
+      display:grid;
+      grid-template-columns:1.15fr .85fr;
+      gap:22px;
+      align-items:center;
+    }
+
+    .hero-copy h1{
+      margin:0 0 10px;
+      font-size:clamp(2rem, 5vw, 4rem);
+      line-height:1.02;
+      letter-spacing:-.04em;
+    }
+
+    .hero-copy p{
+      margin:0 0 22px;
+      color:var(--muted);
+      font-size:clamp(1rem,2vw,1.12rem);
+      line-height:1.65;
+      max-width:62ch;
+    }
+
+    .hero-tags{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-bottom:24px;
+    }
+
+    .tag{
+      padding:10px 14px;
+      border-radius:999px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      color:#eef2ff;
+      font-size:.92rem;
+    }
+
+    .hero-buttons{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+    }
+
+    .hero-art{
+      position:relative;
+      min-height:380px;
+      border-radius:28px;
+      overflow:hidden;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,.16), transparent 18%),
+        radial-gradient(circle at 70% 30%, rgba(255,255,255,.10), transparent 16%),
+        linear-gradient(135deg, rgba(139,92,246,.7), rgba(6,182,212,.5), rgba(236,72,153,.5));
+      border:1px solid rgba(255,255,255,.16);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.18), var(--shadow);
+    }
+
+    .hero-art::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.06), transparent 30%),
+        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600"><defs><linearGradient id="g" x1="0" x2="1"><stop stop-color="%23ffffff" stop-opacity=".15"/><stop offset="1" stop-color="%23ffffff" stop-opacity="0"/></linearGradient></defs><g fill="none" stroke="url(%23g)" stroke-width="2"><path d="M80 80 C 200 10, 300 150, 430 90 S 650 30, 740 110"/><path d="M60 240 C 180 170, 260 310, 420 250 S 640 180, 760 280"/><path d="M40 420 C 170 350, 290 520, 430 430 S 660 360, 770 480"/></g></svg>') center/cover no-repeat;
+      opacity:.9;
+    }
+
+    .phone-card{
+      position:absolute;
+      inset:auto 50% 24px auto;
+      transform:translateX(50%);
+      width:min(84%, 340px);
+      padding:20px;
+      border-radius:28px;
+      background:rgba(15,23,42,.45);
+      border:1px solid rgba(255,255,255,.18);
+      backdrop-filter:blur(16px);
+      box-shadow:var(--shadow);
+    }
+
+    .phone-top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:16px;
+    }
+
+    .dot-row{
+      display:flex;
+      gap:6px;
+    }
+
+    .dot{
+      width:8px;
+      height:8px;
+      border-radius:50%;
+      background:rgba(255,255,255,.6);
+    }
+
+    .pill{
+      height:8px;
+      width:68px;
+      border-radius:999px;
+      background:rgba(255,255,255,.14);
+    }
+
+    .sample-question{
+      border-radius:24px;
+      padding:16px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      margin-bottom:14px;
+    }
+
+    .sample-question .small{
+      color:#ddd6fe;
+      font-size:.82rem;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      margin-bottom:8px;
+    }
+
+    .sample-question h3{
+      margin:0;
+      font-size:1.15rem;
+      line-height:1.4;
+    }
+
+    .choice-stack{
+      display:grid;
+      gap:10px;
+    }
+
+    .fake-choice{
+      padding:12px 14px;
+      border-radius:16px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      font-weight:700;
+    }
+
+    .section-title{
+      margin:0 0 14px;
+      font-size:1.3rem;
+      font-weight:800;
+      letter-spacing:-.02em;
+    }
+
+    .section-sub{
+      margin:0 0 18px;
+      color:var(--muted);
+      line-height:1.7;
+    }
+
+    .grid-3{
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0,1fr));
+      gap:18px;
+    }
+
+    .grid-2{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:18px;
+    }
+
+    .category-card{
+      position:relative;
+      overflow:hidden;
+      padding:18px;
+      border-radius:22px;
+      background:var(--card);
+      border:1px solid var(--stroke);
+      backdrop-filter:blur(var(--blur));
+      box-shadow:var(--shadow);
+      transition:transform .2s ease, border-color .2s ease, background .2s ease;
+      cursor:pointer;
+      user-select:none;
+    }
+
+    .category-card:hover{
+      transform:translateY(-4px);
+      border-color:rgba(255,255,255,.28);
+      background:var(--card-strong);
+    }
+
+    .category-card.selected{
+      outline:2px solid rgba(255,255,255,.3);
+      background:linear-gradient(135deg, rgba(139,92,246,.28), rgba(6,182,212,.2));
+    }
+
+    .category-emoji{
+      width:54px;
+      height:54px;
+      border-radius:18px;
+      display:grid;
+      place-items:center;
+      font-size:26px;
+      margin-bottom:14px;
+      background:rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.14);
+    }
+
+    .category-card h3{
+      margin:0 0 8px;
+      font-size:1.1rem;
+    }
+
+    .category-card p{
+      margin:0 0 12px;
+      color:var(--muted);
+      line-height:1.6;
+      font-size:.96rem;
+    }
+
+    .category-meta{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .mini-badge{
+      padding:7px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.1);
+      font-size:.82rem;
+      color:#e2e8f0;
+    }
+
+    .panel{
+      padding:22px;
+    }
+
+    .controls{
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0,1fr));
+      gap:16px;
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .label{
+      font-size:.95rem;
+      font-weight:700;
+      color:#f1f5f9;
+    }
+
+    .help{
+      color:var(--muted);
+      font-size:.9rem;
+      line-height:1.55;
+    }
+
+    .input,
+    .select,
+    .textarea{
+      width:100%;
+      border:none;
+      outline:none;
+      padding:14px 16px;
+      border-radius:16px;
+      color:var(--text);
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      font-size:1rem;
+      transition:border-color .2s ease, transform .2s ease, background .2s ease;
+    }
+
+    .input:focus,
+    .select:focus,
+    .textarea:focus{
+      border-color:rgba(255,255,255,.32);
+      background:rgba(255,255,255,.12);
+      transform:translateY(-1px);
+    }
+
+    .textarea{
+      min-height:110px;
+      resize:vertical;
+    }
+
+    input[type="range"]{
+      width:100%;
+      accent-color:#8b5cf6;
+    }
+
+    .row{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .toggle{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:12px 14px;
+      border-radius:16px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      min-height:54px;
+      cursor:pointer;
+    }
+
+    .toggle input{
+      accent-color:#8b5cf6;
+      width:18px;
+      height:18px;
+    }
+
+    .btn{
+      border:none;
+      outline:none;
+      cursor:pointer;
+      border-radius:16px;
+      padding:14px 18px;
+      color:white;
+      font-weight:800;
+      font-size:1rem;
+      transition:transform .18s ease, filter .18s ease, opacity .18s ease;
+      box-shadow:var(--shadow);
+    }
+
+    .btn:hover{transform:translateY(-2px);filter:brightness(1.06)}
+    .btn:active{transform:translateY(0)}
+    .btn[disabled]{opacity:.55;cursor:not-allowed;transform:none;filter:none}
+
+    .btn-primary{
+      background:linear-gradient(135deg, var(--accent), #6366f1);
+    }
+
+    .btn-secondary{
+      background:linear-gradient(135deg, var(--accent-2), #0891b2);
+    }
+
+    .btn-pink{
+      background:linear-gradient(135deg, var(--accent-3), #db2777);
+    }
+
+    .btn-ghost{
+      background:rgba(255,255,255,.09);
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow:none;
+    }
+
+    .btn-good{
+      background:linear-gradient(135deg, #22c55e, #16a34a);
+    }
+
+    .btn-warn{
+      background:linear-gradient(135deg, #f59e0b, #d97706);
+    }
+
+    .btn-bad{
+      background:linear-gradient(135deg, #ef4444, #dc2626);
+    }
+
+    .btn-block{
+      width:100%;
+    }
+
+    .mode-pills{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .mode-pill{
+      padding:12px 16px;
+      border-radius:999px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      cursor:pointer;
+      font-weight:700;
+      transition:all .2s ease;
+    }
+
+    .mode-pill.active{
+      background:linear-gradient(135deg, rgba(139,92,246,.35), rgba(6,182,212,.22));
+      border-color:rgba(255,255,255,.24);
+    }
+
+    .stats-bar{
+      display:grid;
+      grid-template-columns:repeat(4, minmax(0,1fr));
+      gap:14px;
+    }
+
+    .stat{
+      padding:16px;
+      border-radius:20px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+    }
+
+    .stat-label{
+      color:var(--muted);
+      font-size:.9rem;
+      margin-bottom:6px;
+    }
+
+    .stat-value{
+      font-size:1.35rem;
+      font-weight:800;
+      letter-spacing:-.02em;
+    }
+
+    .game-wrap{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:18px;
+    }
+
+    .question-card{
+      padding:22px;
+    }
+
+    .progress-wrap{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      flex-wrap:wrap;
+      margin-bottom:18px;
+    }
+
+    .progress-bar{
+      flex:1;
+      min-width:220px;
+      height:12px;
+      background:rgba(255,255,255,.08);
+      border-radius:999px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.08);
+    }
+
+    .progress-fill{
+      height:100%;
+      width:0%;
+      background:linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition:width .28s ease;
+    }
+
+    .timer-ring-wrap{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      flex-wrap:wrap;
+    }
+
+    .timer-chip{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:12px 14px;
+      border-radius:16px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      font-weight:800;
+    }
+
+    .timer-chip.warning{
+      background:rgba(245,158,11,.18);
+      border-color:rgba(245,158,11,.35);
+      color:#fde68a;
+    }
+
+    .timer-chip.danger{
+      background:rgba(239,68,68,.18);
+      border-color:rgba(239,68,68,.35);
+      color:#fecaca;
+    }
+
+    .question-meta{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:14px;
+    }
+
+    .question-pill{
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      font-size:.86rem;
+      color:#e2e8f0;
+    }
+
+    .question-title{
+      margin:0 0 18px;
+      font-size:clamp(1.35rem, 2.2vw, 2rem);
+      line-height:1.3;
+      letter-spacing:-.02em;
+    }
+
+    .wyr-grid{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:16px;
+    }
+
+    .option-btn{
+      position:relative;
+      overflow:hidden;
+      text-align:left;
+      min-height:160px;
+      padding:20px;
+      border-radius:24px;
+      border:1px solid rgba(255,255,255,.14);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.04)),
+        rgba(255,255,255,.08);
+      color:var(--text);
+      cursor:pointer;
+      transition:transform .2s ease, border-color .2s ease, background .2s ease;
+    }
+
+    .option-btn:hover{
+      transform:translateY(-4px);
+      border-color:rgba(255,255,255,.28);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05)),
+        rgba(255,255,255,.12);
+    }
+
+    .option-btn.selected{
+      border-color:rgba(255,255,255,.36);
+      background:
+        linear-gradient(135deg, rgba(139,92,246,.25), rgba(6,182,212,.18)),
+        rgba(255,255,255,.12);
+      outline:2px solid rgba(255,255,255,.14);
+    }
+
+    .option-label{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      font-size:.84rem;
+      font-weight:800;
+      margin-bottom:14px;
+    }
+
+    .option-text{
+      font-size:1.12rem;
+      line-height:1.55;
+      font-weight:700;
+    }
+
+    .choice-summary{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:14px;
+      margin-top:16px;
+    }
+
+    .summary-box{
+      padding:16px;
+      border-radius:20px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+    }
+
+    .summary-box .big{
+      font-size:1.2rem;
+      font-weight:800;
+      margin-top:6px;
+    }
+
+    .results-grid{
+      display:grid;
+      grid-template-columns:1.2fr .8fr;
+      gap:18px;
+    }
+
+    .result-card{
+      padding:24px;
+      height:100%;
+    }
+
+    .result-hero{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:16px;
+      flex-wrap:wrap;
+      margin-bottom:18px;
+    }
+
+    .result-hero h2{
+      margin:0;
+      font-size:clamp(1.7rem, 3vw, 2.6rem);
+    }
+
+    .result-hero p{
+      margin:10px 0 0;
+      color:var(--muted);
+      line-height:1.65;
+      max-width:60ch;
+    }
+
+    .score-pill{
+      padding:16px 18px;
+      border-radius:20px;
+      background:linear-gradient(135deg, rgba(139,92,246,.26), rgba(6,182,212,.18));
+      border:1px solid rgba(255,255,255,.14);
+      min-width:180px;
+      text-align:center;
+    }
+
+    .score-pill .top{
+      font-size:.88rem;
+      color:#ddd6fe;
+      margin-bottom:6px;
+    }
+
+    .score-pill .num{
+      font-size:2rem;
+      font-weight:900;
+      letter-spacing:-.04em;
+    }
+
+    .results-stats{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:14px;
+      margin-top:12px;
+    }
+
+    .result-stat{
+      padding:16px;
+      border-radius:18px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+    }
+
+    .result-stat .name{
+      color:var(--muted);
+      margin-bottom:6px;
+      font-size:.92rem;
+    }
+
+    .result-stat .value{
+      font-size:1.2rem;
+      font-weight:800;
+    }
+
+    .history-list{
+      display:grid;
+      gap:12px;
+      max-height:420px;
+      overflow:auto;
+      padding-right:4px;
+    }
+
+    .history-item{
+      padding:14px;
+      border-radius:18px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+    }
+
+    .history-item .q{
+      font-weight:700;
+      margin-bottom:8px;
+      line-height:1.5;
+    }
+
+    .history-item .a{
+      color:#e9d5ff;
+      font-size:.95rem;
+    }
+
+    .custom-list{
+      display:grid;
+      gap:12px;
+      margin-top:18px;
+      max-height:360px;
+      overflow:auto;
+      padding-right:4px;
+    }
+
+    .custom-item{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:12px;
+      align-items:start;
+      padding:16px;
+      border-radius:20px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+    }
+
+    .custom-item h4{
+      margin:0 0 8px;
+      line-height:1.45;
+      font-size:1rem;
+    }
+
+    .custom-item p{
+      margin:4px 0;
+      color:var(--muted);
+      line-height:1.5;
+      font-size:.94rem;
+    }
+
+    .empty-state{
+      padding:20px;
+      border-radius:20px;
+      background:rgba(255,255,255,.06);
+      border:1px dashed rgba(255,255,255,.18);
+      color:var(--muted);
+      line-height:1.7;
+    }
+
+    .footer-note{
+      text-align:center;
+      color:var(--muted);
+      font-size:.92rem;
+      padding:8px 0 20px;
+    }
+
+    .hidden{
+      display:none !important;
+    }
+
+    .fade-pop{
+      animation:fadePop .3s ease;
+    }
+
+    @keyframes fadePop{
+      from{opacity:.4;transform:scale(.98)}
+      to{opacity:1;transform:scale(1)}
+    }
+
+    .sparkles{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      overflow:hidden;
+    }
+
+    .sparkle{
+      position:absolute;
+      width:10px;
+      height:10px;
+      border-radius:50%;
+      background:rgba(255,255,255,.9);
+      filter:blur(.4px);
+      animation:twinkle linear infinite;
+      opacity:.65;
+    }
+
+    @keyframes twinkle{
+      0%{transform:translateY(0) scale(.6);opacity:.15}
+      50%{opacity:.9}
+      100%{transform:translateY(-80px) scale(1.2);opacity:0}
+    }
+
+    @media (max-width: 1024px){
+      .hero-grid,
+      .results-grid,
+      .grid-3,
+      .controls{
+        grid-template-columns:1fr 1fr;
+      }
+      .hero-art{
+        min-height:340px;
+      }
+    }
+
+    @media (max-width: 760px){
+      .topbar-inner{
+        align-items:flex-start;
+      }
+      .top-actions{
+        width:100%;
+        justify-content:flex-start;
+      }
+      .hero,
+      .panel,
+      .question-card,
+      .result-card{
+        padding:18px;
+      }
+      .hero-grid,
+      .grid-3,
+      .grid-2,
+      .controls,
+      .stats-bar,
+      .results-grid,
+      .results-stats,
+      .wyr-grid,
+      .choice-summary{
+        grid-template-columns:1fr;
+      }
+      .phone-card{
+        width:calc(100% - 28px);
+        transform:none;
+        inset:auto 14px 14px 14px;
+      }
+      .hero-art{
+        min-height:420px;
+      }
+      .btn{
+        width:100%;
+      }
+      .hero-buttons,
+      .row{
+        display:grid;
+        grid-template-columns:1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="brand-badge">🤔</div>
+          <div class="brand-text">
+            <p class="brand-title">Would-You-Rather Generator</p>
+            <p class="brand-sub">Create, customize, and play fast, fun decision-based challenges.</p>
+          </div>
+        </div>
+        <div class="top-actions">
+          <button class="btn btn-ghost" id="homeTopBtn">🏠 Return Home</button>
+          <button class="btn btn-ghost" id="soundTopBtn">🔊 Sound On</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="shell">
+      <!-- HOME / START SCREEN -->
+      <section class="screen active" id="homeScreen">
+        <div class="hero glass">
+          <div class="sparkles" id="sparkles"></div>
+          <div class="hero-grid">
+            <div class="hero-copy">
+              <div class="hero-tags">
+                <span class="tag">Single-file app</span>
+                <span class="tag">Built-in categories</span>
+                <span class="tag">Custom builder mode</span>
+                <span class="tag">Timer + score + results</span>
+              </div>
+              <h1>Would-You-Rather Generator</h1>
+              <p>
+                Jump into a polished, interactive game where players pick between two wild, funny, hard, or downright impossible choices.
+                Choose built-in categories, randomize settings, or build your own custom deck and play it your way.
+              </p>
+              <div class="hero-buttons">
+                <button class="btn btn-primary" id="goSetupBtn">🎮 Start Setup</button>
+                <button class="btn btn-secondary" id="quickStartBtn">⚡ Quick Start</button>
+                <button class="btn btn-pink" id="goBuilderBtn">🛠️ Custom Builder</button>
+              </div>
+            </div>
+
+            <div class="hero-art" aria-label="Game cover image area">
+              <div class="phone-card">
+                <div class="phone-top">
+                  <div class="dot-row">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                  </div>
+                  <div class="pill"></div>
+                </div>
+                <div class="sample-question">
+                  <div class="small">Live Preview</div>
+                  <h3>Would you rather always have to sing your thoughts or dance everywhere you go?</h3>
+                </div>
+                <div class="choice-stack">
+                  <div class="fake-choice">🎤 Sing your thoughts</div>
+                  <div class="fake-choice">💃 Dance everywhere</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel glass">
+          <h2 class="section-title">Pick a vibe and play</h2>
+          <p class="section-sub">
+            The built-in game includes 60+ decision prompts across multiple categories so you can actually play more than one tiny round.
+            Choose a category, mix several, or let the game randomize everything for you.
+          </p>
+
+          <div class="grid-3" id="homeCategoryGrid"></div>
+        </div>
+      </section>
+
+      <!-- SETUP SCREEN -->
+      <section class="screen" id="setupScreen">
+        <div class="panel glass">
+          <div class="row" style="justify-content:space-between;align-items:flex-start;">
+            <div>
+              <h2 class="section-title">Game Setup</h2>
+              <p class="section-sub">
+                Choose your game mode, timer, number of questions, and categories. Then hit play.
+              </p>
+            </div>
+            <div class="row" style="min-width:min(100%, 420px);justify-content:flex-end;">
+              <button class="btn btn-secondary" id="randomizeBtn">🎲 Randomize Settings</button>
+              <button class="btn btn-ghost" id="setupHomeBtn">🏠 Return Home</button>
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom:18px;">
+            <label class="label">Mode</label>
+            <div class="mode-pills">
+              <button class="mode-pill active" data-mode="builtIn" id="builtInModeBtn">Built-in Game</button>
+              <button class="mode-pill" data-mode="custom" id="customModeBtn">Custom Builder Game</button>
+            </div>
+            <div class="help">Built-in uses the included question library. Custom uses the questions you create in the builder.</div>
+          </div>
+
+          <div class="controls" style="margin-bottom:18px;">
+            <div class="field">
+              <label class="label" for="questionCount">Questions per game</label>
+              <select id="questionCount" class="select">
+                <option value="5">5 Questions</option>
+                <option value="10" selected>10 Questions</option>
+                <option value="15">15 Questions</option>
+                <option value="20">20 Questions</option>
+              </select>
+              <div class="help">How many questions show up in one game.</div>
+            </div>
+
+            <div class="field">
+              <label class="label" for="timerSeconds">Timer per question</label>
+              <input id="timerSeconds" type="range" min="5" max="30" step="1" value="15" />
+              <div class="help"><span id="timerValue">15</span> seconds per question.</div>
+            </div>
+
+            <div class="field">
+              <label class="label">Game options</label>
+              <div class="row">
+                <label class="toggle"><input type="checkbox" id="soundToggle" checked /> <span>Sound On</span></label>
+                <label class="toggle"><input type="checkbox" id="shuffleToggle" checked /> <span>Shuffle Questions</span></label>
+              </div>
+              <div class="help">Toggle sound effects and shuffle behavior.</div>
+            </div>
+          </div>
+
+          <div id="builtInSetupBlock">
+            <h3 class="section-title" style="font-size:1.1rem;margin-top:8px;">Select categories</h3>
+            <p class="section-sub">Pick one or more. If you pick none, the game will use all categories.</p>
+            <div class="grid-3" id="setupCategoryGrid"></div>
+          </div>
+
+          <div id="customSetupBlock" class="hidden">
+            <h3 class="section-title" style="font-size:1.1rem;margin-top:8px;">Custom deck status</h3>
+            <div class="empty-state" id="customDeckNotice">
+              You haven't added any custom questions yet. Head to the Custom Builder, add a few questions, then come back and play your custom game.
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:18px;">
+            <button class="btn btn-primary" id="startGameBtn">▶️ Start Game</button>
+            <button class="btn btn-pink" id="setupBuilderBtn">🛠️ Open Builder</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- CUSTOM BUILDER SCREEN -->
+      <section class="screen" id="builderScreen">
+        <div class="panel glass">
+          <div class="row" style="justify-content:space-between;align-items:flex-start;">
+            <div>
+              <h2 class="section-title">Custom Builder Mode</h2>
+              <p class="section-sub">
+                Create your own would-you-rather questions. Add as many as you want, delete individual ones, clear them all, and then play your custom deck.
+              </p>
+            </div>
+            <div class="row" style="min-width:min(100%, 430px);justify-content:flex-end;">
+              <button class="btn btn-secondary" id="builderPlayBtn">🎮 Play Custom Game</button>
+              <button class="btn btn-ghost" id="builderHomeBtn">🏠 Return Home</button>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="field">
+              <label class="label" for="customQuestionText">Question prompt</label>
+              <textarea id="customQuestionText" class="textarea" placeholder="Example: Would you rather be able to teleport anywhere or pause time whenever you want?"></textarea>
+              <div class="help">Type the full question prompt.</div>
+            </div>
+
+            <div class="field">
+              <label class="label">Question preview</label>
+              <div class="glass" style="padding:18px;border-radius:20px;">
+                <div class="question-pill" style="display:inline-flex;margin-bottom:12px;">Custom Preview</div>
+                <h3 id="livePreviewQuestion" style="margin:0 0 14px;line-height:1.4;">Your question preview shows here.</h3>
+                <div class="choice-stack">
+                  <div class="fake-choice" id="livePreviewA">Option A preview</div>
+                  <div class="fake-choice" id="livePreviewB">Option B preview</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid-2" style="margin-top:18px;">
+            <div class="field">
+              <label class="label" for="customOptionA">Option A</label>
+              <input id="customOptionA" class="input" type="text" placeholder="Example: Teleport anywhere" />
+            </div>
+            <div class="field">
+              <label class="label" for="customOptionB">Option B</label>
+              <input id="customOptionB" class="input" type="text" placeholder="Example: Pause time" />
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:18px;">
+            <button class="btn btn-primary" id="saveCustomBtn">💾 Save Custom Question</button>
+            <button class="btn btn-warn" id="clearBuilderFormBtn">🧹 Clear Form</button>
+            <button class="btn btn-bad" id="deleteAllCustomBtn">🗑️ Delete All Custom Questions</button>
+          </div>
+
+          <div style="margin-top:24px;">
+            <h3 class="section-title" style="font-size:1.1rem;">Saved custom questions</h3>
+            <div id="customList" class="custom-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- GAME SCREEN -->
+      <section class="screen" id="gameScreen">
+        <div class="stats-bar">
+          <div class="stat glass">
+            <div class="stat-label">Score</div>
+            <div class="stat-value" id="scoreStat">0</div>
+          </div>
+          <div class="stat glass">
+            <div class="stat-label">Question</div>
+            <div class="stat-value" id="questionStat">1 / 10</div>
+          </div>
+          <div class="stat glass">
+            <div class="stat-label">Mode</div>
+            <div class="stat-value" id="modeStat">Built-in</div>
+          </div>
+          <div class="stat glass">
+            <div class="stat-label">Category</div>
+            <div class="stat-value" id="categoryStat">Mixed</div>
+          </div>
+        </div>
+
+        <div class="game-wrap">
+          <div class="question-card glass">
+            <div class="progress-wrap">
+              <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+              </div>
+              <div class="timer-ring-wrap">
+                <div class="timer-chip" id="timerChip">⏳ <span id="timerDisplay">15</span>s</div>
+                <button class="btn btn-ghost" id="restartGameBtn">🔁 Restart</button>
+                <button class="btn btn-ghost" id="gameHomeBtn">🏠 Return Home</button>
+              </div>
+            </div>
+
+            <div class="question-meta">
+              <span class="question-pill" id="questionModePill">Built-in Game</span>
+              <span class="question-pill" id="questionCategoryPill">Category: Mixed</span>
+            </div>
+
+            <h2 class="question-title" id="questionTitle">Loading question...</h2>
+
+            <div class="wyr-grid">
+              <button class="option-btn" id="optionABtn">
+                <div class="option-label">A Choice</div>
+                <div class="option-text" id="optionAText">Option A</div>
+              </button>
+
+              <button class="option-btn" id="optionBBtn">
+                <div class="option-label">B Choice</div>
+                <div class="option-text" id="optionBText">Option B</div>
+              </button>
+            </div>
+
+            <div class="choice-summary">
+              <div class="summary-box">
+                <div class="stat-label">A Choices</div>
+                <div class="big" id="choiceACount">0</div>
+              </div>
+              <div class="summary-box">
+                <div class="stat-label">B Choices</div>
+                <div class="big" id="choiceBCount">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RESULTS SCREEN -->
+      <section class="screen" id="resultsScreen">
+        <div class="results-grid">
+          <div class="result-card glass">
+            <div class="result-hero">
+              <div>
+                <h2>Game Results</h2>
+                <p id="resultsSummaryText">
+                  Here’s your final game summary.
+                </p>
+              </div>
+              <div class="score-pill">
+                <div class="top">Final Score</div>
+                <div class="num" id="finalScore">0</div>
+              </div>
+            </div>
+
+            <div class="results-stats">
+              <div class="result-stat">
+                <div class="name">Questions Answered</div>
+                <div class="value" id="finalAnswered">0</div>
+              </div>
+              <div class="result-stat">
+                <div class="name">Mode</div>
+                <div class="value" id="finalMode">Built-in</div>
+              </div>
+              <div class="result-stat">
+                <div class="name">A Picks</div>
+                <div class="value" id="finalA">0</div>
+              </div>
+              <div class="result-stat">
+                <div class="name">B Picks</div>
+                <div class="value" id="finalB">0</div>
+              </div>
+            </div>
+
+            <div class="row" style="margin-top:20px;">
+              <button class="btn btn-primary" id="playAgainBtn">🎮 Play Again</button>
+              <button class="btn btn-secondary" id="resultsSetupBtn">⚙️ Back to Setup</button>
+              <button class="btn btn-ghost" id="resultsHomeBtn">🏠 Return Home</button>
+            </div>
+          </div>
+
+          <div class="result-card glass">
+            <h3 class="section-title" style="font-size:1.1rem;">Choice history</h3>
+            <div id="historyList" class="history-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <div class="footer-note">
+        Would-You-Rather Generator • Single-file interactive web app
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const builtInCategories = [
+      {
+        id: "funny",
+        name: "Funny",
+        emoji: "😂",
+        description: "Ridiculous, silly, and chaotic choices that make people laugh.",
+        questions: [
+          { q: "Would you rather always have to sing your thoughts or dance everywhere you go?", a: "Sing your thoughts", b: "Dance everywhere you go" },
+          { q: "Would you rather have spaghetti for hair or waffles for feet?", a: "Spaghetti for hair", b: "Waffles for feet" },
+          { q: "Would you rather sneeze glitter or hiccup confetti?", a: "Sneeze glitter", b: "Hiccup confetti" },
+          { q: "Would you rather laugh like a villain or walk like a penguin forever?", a: "Laugh like a villain", b: "Walk like a penguin forever" },
+          { q: "Would you rather burp every time you say your name or wink every time you hear music?", a: "Burp when saying your name", b: "Wink when hearing music" },
+          { q: "Would you rather wear clown shoes every day or a superhero cape to bed every night?", a: "Wear clown shoes daily", b: "Sleep in a superhero cape" },
+          { q: "Would you rather only be able to whisper or only be able to shout?", a: "Only whisper", b: "Only shout" },
+          { q: "Would you rather have a duck narrate your life or a goat follow you around cheering?", a: "Duck narrates your life", b: "Goat cheers you on" },
+          { q: "Would you rather have eyebrows that glow or teeth that sparkle like disco lights?", a: "Glowing eyebrows", b: "Disco-light teeth" },
+          { q: "Would you rather slip on banana peels once a week or get pie-faced once a month?", a: "Slip weekly", b: "Pie-faced monthly" }
+        ]
+      },
+      {
+        id: "food",
+        name: "Food",
+        emoji: "🍕",
+        description: "Tasty, weird, and impossible food choices you definitely did not ask for.",
+        questions: [
+          { q: "Would you rather eat only sweet foods for a month or only salty foods for a month?", a: "Only sweet foods", b: "Only salty foods" },
+          { q: "Would you rather give up pizza forever or tacos forever?", a: "Give up pizza", b: "Give up tacos" },
+          { q: "Would you rather drink pickle juice every morning or eat one raw onion every night?", a: "Drink pickle juice", b: "Eat a raw onion nightly" },
+          { q: "Would you rather have unlimited dessert but no fries, or unlimited fries but no dessert?", a: "Unlimited dessert, no fries", b: "Unlimited fries, no dessert" },
+          { q: "Would you rather only eat breakfast foods or only eat dinner foods for the rest of your life?", a: "Only breakfast foods", b: "Only dinner foods" },
+          { q: "Would you rather put hot sauce on ice cream or chocolate syrup on mashed potatoes?", a: "Hot sauce on ice cream", b: "Chocolate syrup on mashed potatoes" },
+          { q: "Would you rather never eat cheese again or never eat bread again?", a: "Never eat cheese", b: "Never eat bread" },
+          { q: "Would you rather always be slightly hungry or always slightly too full?", a: "Always slightly hungry", b: "Always slightly too full" },
+          { q: "Would you rather have pancakes for dinner every Friday or burgers for breakfast every Saturday?", a: "Pancakes for Friday dinner", b: "Burgers for Saturday breakfast" },
+          { q: "Would you rather eat your favorite food cold forever or your least favorite food hot forever?", a: "Favorite food cold", b: "Least favorite food hot" }
+        ]
+      },
+      {
+        id: "adventure",
+        name: "Adventure",
+        emoji: "🌍",
+        description: "Big travel, exploration, and thrill-seeking choices.",
+        questions: [
+          { q: "Would you rather explore the deep ocean or outer space?", a: "Explore the deep ocean", b: "Explore outer space" },
+          { q: "Would you rather climb a snowy mountain or hike through a rainforest?", a: "Climb a snowy mountain", b: "Hike through a rainforest" },
+          { q: "Would you rather take a luxury train across Europe or sail on a private yacht through the islands?", a: "Luxury train across Europe", b: "Private yacht through islands" },
+          { q: "Would you rather go skydiving once or bungee jump three times?", a: "Skydive once", b: "Bungee jump three times" },
+          { q: "Would you rather live in a treehouse in the jungle or a cabin beside a frozen lake?", a: "Treehouse in the jungle", b: "Cabin by a frozen lake" },
+          { q: "Would you rather spend a week in Tokyo or a week in Paris?", a: "A week in Tokyo", b: "A week in Paris" },
+          { q: "Would you rather ride camels through a desert or dogsled through snow?", a: "Ride camels through a desert", b: "Dogsled through snow" },
+          { q: "Would you rather discover a hidden waterfall or a secret cave full of crystals?", a: "Hidden waterfall", b: "Secret crystal cave" },
+          { q: "Would you rather spend a night under the northern lights or watch the sunrise from a hot-air balloon?", a: "Night under northern lights", b: "Sunrise from a hot-air balloon" },
+          { q: "Would you rather go on a safari or dive on a coral reef expedition?", a: "Go on a safari", b: "Dive on a coral reef expedition" }
+        ]
+      },
+      {
+        id: "relationships",
+        name: "Relationships",
+        emoji: "💞",
+        description: "Friendship, love, family, and social-life choices.",
+        questions: [
+          { q: "Would you rather have one best friend for life or five close friends nearby?", a: "One best friend for life", b: "Five close friends nearby" },
+          { q: "Would you rather always know when someone likes you or always know when someone is lying to you?", a: "Know when someone likes you", b: "Know when someone is lying" },
+          { q: "Would you rather plan every family event or never have to plan one again?", a: "Plan every family event", b: "Never plan one again" },
+          { q: "Would you rather be the funniest person in every room or the most comforting person in every room?", a: "Funniest person", b: "Most comforting person" },
+          { q: "Would you rather receive thoughtful texts every day or one amazing surprise visit every month?", a: "Thoughtful texts every day", b: "Amazing surprise visit monthly" },
+          { q: "Would you rather only be able to communicate through voice notes or only through handwritten notes?", a: "Only voice notes", b: "Only handwritten notes" },
+          { q: "Would you rather have your friends pick your weekend plans or your family pick them?", a: "Friends pick your weekends", b: "Family picks your weekends" },
+          { q: "Would you rather always remember birthdays or always give the perfect gift?", a: "Always remember birthdays", b: "Always give the perfect gift" },
+          { q: "Would you rather go on a spontaneous road trip with friends or a cozy cabin trip with one favorite person?", a: "Spontaneous road trip", b: "Cozy cabin trip with one person" },
+          { q: "Would you rather be known for loyalty or honesty?", a: "Loyalty", b: "Honesty" }
+        ]
+      },
+      {
+        id: "hard",
+        name: "Hard Choices",
+        emoji: "🔥",
+        description: "Tough calls that make you pause for a second.",
+        questions: [
+          { q: "Would you rather relive your most embarrassing day once a year or your most stressful day once a year?", a: "Relive your most embarrassing day", b: "Relive your most stressful day" },
+          { q: "Would you rather lose your phone for a month or your TV and streaming for six months?", a: "Lose your phone for a month", b: "Lose TV and streaming for six months" },
+          { q: "Would you rather always be 10 minutes late or always arrive 30 minutes early?", a: "Always 10 minutes late", b: "Always 30 minutes early" },
+          { q: "Would you rather know exactly how you'll die or exactly when you'll die?", a: "Know how you'll die", b: "Know when you'll die" },
+          { q: "Would you rather give up music forever or movies forever?", a: "Give up music forever", b: "Give up movies forever" },
+          { q: "Would you rather never use social media again or never watch online videos again?", a: "No social media ever again", b: "No online videos ever again" },
+          { q: "Would you rather be incredibly lucky but misunderstood or deeply respected but unlucky?", a: "Lucky but misunderstood", b: "Respected but unlucky" },
+          { q: "Would you rather have unlimited free travel but never return home, or stay home forever with unlimited luxury?", a: "Unlimited travel, no home return", b: "Stay home with unlimited luxury" },
+          { q: "Would you rather always speak your mind or always keep the peace?", a: "Always speak your mind", b: "Always keep the peace" },
+          { q: "Would you rather have one regret erased or one dream guaranteed?", a: "Erase one regret", b: "Guarantee one dream" }
+        ]
+      },
+      {
+        id: "fantasy",
+        name: "Fantasy",
+        emoji: "✨",
+        description: "Magic, powers, and unreal worlds where logic clocks out.",
+        questions: [
+          { q: "Would you rather be able to fly or become invisible at will?", a: "Fly", b: "Become invisible" },
+          { q: "Would you rather live in a castle with dragons or a futuristic city with robots?", a: "Castle with dragons", b: "Futuristic city with robots" },
+          { q: "Would you rather control fire or control water?", a: "Control fire", b: "Control water" },
+          { q: "Would you rather have a magical talking pet or a personal teleportation portal?", a: "Magical talking pet", b: "Personal teleportation portal" },
+          { q: "Would you rather attend wizard school or superhero academy?", a: "Wizard school", b: "Superhero academy" },
+          { q: "Would you rather have the power to pause time or rewind time once per day?", a: "Pause time", b: "Rewind time once per day" },
+          { q: "Would you rather own a flying carpet or enchanted boots that let you run on clouds?", a: "Flying carpet", b: "Enchanted cloud boots" },
+          { q: "Would you rather discover a hidden magical library or a doorway to another universe?", a: "Hidden magical library", b: "Doorway to another universe" },
+          { q: "Would you rather summon storms or talk to stars?", a: "Summon storms", b: "Talk to stars" },
+          { q: "Would you rather have perfect shape-shifting powers or perfect mind-reading powers?", a: "Shape-shifting powers", b: "Mind-reading powers" }
+        ]
+      }
+    ];
+
+    const appState = {
+      soundOn: true,
+      mode: "builtIn",
+      selectedCategories: new Set(),
+      timerSeconds: 15,
+      questionCount: 10,
+      shuffle: true,
+      currentDeck: [],
+      currentIndex: 0,
+      score: 0,
+      answered: 0,
+      choiceA: 0,
+      choiceB: 0,
+      timer: null,
+      timeLeft: 15,
+      currentQuestion: null,
+      history: [],
+      customQuestions: []
+    };
+
+    const screens = {
+      home: document.getElementById("homeScreen"),
+      setup: document.getElementById("setupScreen"),
+      builder: document.getElementById("builderScreen"),
+      game: document.getElementById("gameScreen"),
+      results: document.getElementById("resultsScreen")
+    };
+
+    const els = {
+      homeCategoryGrid: document.getElementById("homeCategoryGrid"),
+      setupCategoryGrid: document.getElementById("setupCategoryGrid"),
+      goSetupBtn: document.getElementById("goSetupBtn"),
+      quickStartBtn: document.getElementById("quickStartBtn"),
+      goBuilderBtn: document.getElementById("goBuilderBtn"),
+      homeTopBtn: document.getElementById("homeTopBtn"),
+      soundTopBtn: document.getElementById("soundTopBtn"),
+
+      questionCount: document.getElementById("questionCount"),
+      timerSeconds: document.getElementById("timerSeconds"),
+      timerValue: document.getElementById("timerValue"),
+      soundToggle: document.getElementById("soundToggle"),
+      shuffleToggle: document.getElementById("shuffleToggle"),
+      randomizeBtn: document.getElementById("randomizeBtn"),
+      setupHomeBtn: document.getElementById("setupHomeBtn"),
+      startGameBtn: document.getElementById("startGameBtn"),
+      setupBuilderBtn: document.getElementById("setupBuilderBtn"),
+      builtInModeBtn: document.getElementById("builtInModeBtn"),
+      customModeBtn: document.getElementById("customModeBtn"),
+      builtInSetupBlock: document.getElementById("builtInSetupBlock"),
+      customSetupBlock: document.getElementById("customSetupBlock"),
+      customDeckNotice: document.getElementById("customDeckNotice"),
+
+      builderHomeBtn: document.getElementById("builderHomeBtn"),
+      builderPlayBtn: document.getElementById("builderPlayBtn"),
+      customQuestionText: document.getElementById("customQuestionText"),
+      customOptionA: document.getElementById("customOptionA"),
+      customOptionB: document.getElementById("customOptionB"),
+      livePreviewQuestion: document.getElementById("livePreviewQuestion"),
+      livePreviewA: document.getElementById("livePreviewA"),
+      livePreviewB: document.getElementById("livePreviewB"),
+      saveCustomBtn: document.getElementById("saveCustomBtn"),
+      clearBuilderFormBtn: document.getElementById("clearBuilderFormBtn"),
+      deleteAllCustomBtn: document.getElementById("deleteAllCustomBtn"),
+      customList: document.getElementById("customList"),
+
+      scoreStat: document.getElementById("scoreStat"),
+      questionStat: document.getElementById("questionStat"),
+      modeStat: document.getElementById("modeStat"),
+      categoryStat: document.getElementById("categoryStat"),
+      progressFill: document.getElementById("progressFill"),
+      timerChip: document.getElementById("timerChip"),
+      timerDisplay: document.getElementById("timerDisplay"),
+      restartGameBtn: document.getElementById("restartGameBtn"),
+      gameHomeBtn: document.getElementById("gameHomeBtn"),
+      questionModePill: document.getElementById("questionModePill"),
+      questionCategoryPill: document.getElementById("questionCategoryPill"),
+      questionTitle: document.getElementById("questionTitle"),
+      optionABtn: document.getElementById("optionABtn"),
+      optionBBtn: document.getElementById("optionBBtn"),
+      optionAText: document.getElementById("optionAText"),
+      optionBText: document.getElementById("optionBText"),
+      choiceACount: document.getElementById("choiceACount"),
+      choiceBCount: document.getElementById("choiceBCount"),
+
+      finalScore: document.getElementById("finalScore"),
+      finalAnswered: document.getElementById("finalAnswered"),
+      finalMode: document.getElementById("finalMode"),
+      finalA: document.getElementById("finalA"),
+      finalB: document.getElementById("finalB"),
+      resultsSummaryText: document.getElementById("resultsSummaryText"),
+      historyList: document.getElementById("historyList"),
+      playAgainBtn: document.getElementById("playAgainBtn"),
+      resultsSetupBtn: document.getElementById("resultsSetupBtn"),
+      resultsHomeBtn: document.getElementById("resultsHomeBtn")
+    };
+
+    function saveCustomQuestions() {
+      localStorage.setItem("wyr_custom_questions_v1", JSON.stringify(appState.customQuestions));
+    }
+
+    function loadCustomQuestions() {
+      try {
+        const raw = localStorage.getItem("wyr_custom_questions_v1");
+        appState.customQuestions = raw ? JSON.parse(raw) : [];
+      } catch {
+        appState.customQuestions = [];
+      }
+    }
+
+    function showScreen(name) {
+      Object.values(screens).forEach(screen => screen.classList.remove("active"));
+      screens[name].classList.add("active");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function goHome() {
+      stopTimer();
+      showScreen("home");
+      clearGameSelectionButtons();
+    }
+
+    function createSparkles() {
+      const wrap = document.getElementById("sparkles");
+      for (let i = 0; i < 26; i++) {
+        const s = document.createElement("span");
+        s.className = "sparkle";
+        s.style.left = Math.random() * 100 + "%";
+        s.style.top = Math.random() * 100 + "%";
+        s.style.width = s.style.height = (Math.random() * 8 + 4) + "px";
+        s.style.animationDuration = (Math.random() * 4 + 4) + "s";
+        s.style.animationDelay = (-Math.random() * 6) + "s";
+        wrap.appendChild(s);
+      }
+    }
+
+    function renderCategoryCards(target, selectable = false) {
+      target.innerHTML = "";
+      builtInCategories.forEach(cat => {
+        const card = document.createElement("div");
+        card.className = "category-card";
+        if (selectable && appState.selectedCategories.has(cat.id)) {
+          card.classList.add("selected");
+        }
+
+        card.innerHTML = `
+          <div class="category-emoji">${cat.emoji}</div>
+          <h3>${cat.name}</h3>
+          <p>${cat.description}</p>
+          <div class="category-meta">
+            <span class="mini-badge">${cat.questions.length} questions</span>
+            <span class="mini-badge">2-choice mode</span>
+          </div>
+        `;
+
+        if (selectable) {
+          card.addEventListener("click", () => {
+            if (appState.selectedCategories.has(cat.id)) {
+              appState.selectedCategories.delete(cat.id);
+              card.classList.remove("selected");
+            } else {
+              appState.selectedCategories.add(cat.id);
+              card.classList.add("selected");
+            }
+            updateSetupCategoryStatus();
+          });
+        } else {
+          card.addEventListener("click", () => {
+            appState.mode = "builtIn";
+            setModeButtons();
+            appState.selectedCategories.clear();
+            appState.selectedCategories.add(cat.id);
+            renderCategoryCards(els.setupCategoryGrid, true);
+            updateSetupCategoryStatus();
+            showScreen("setup");
+          });
+        }
+
+        target.appendChild(card);
+      });
+    }
+
+    function updateSetupCategoryStatus() {
+      const count = appState.selectedCategories.size;
+      if (appState.mode === "custom") {
+        const customCount = appState.customQuestions.length;
+        els.customDeckNotice.innerHTML = customCount
+          ? `Your custom deck is ready with <strong>${customCount}</strong> question${customCount === 1 ? "" : "s"}. Hit Start Game when you're ready.`
+          : `You haven't added any custom questions yet. Head to the Custom Builder, add a few questions, then come back and play your custom game.`;
+      }
+    }
+
+    function setModeButtons() {
+      const builtInActive = appState.mode === "builtIn";
+      els.builtInModeBtn.classList.toggle("active", builtInActive);
+      els.customModeBtn.classList.toggle("active", !builtInActive);
+      els.builtInSetupBlock.classList.toggle("hidden", !builtInActive);
+      els.customSetupBlock.classList.toggle("hidden", builtInActive);
+      updateSetupCategoryStatus();
+    }
+
+    function updateTimerLabel() {
+      appState.timerSeconds = parseInt(els.timerSeconds.value, 10);
+      els.timerValue.textContent = appState.timerSeconds;
+    }
+
+    function updateSoundUI() {
+      els.soundTopBtn.textContent = appState.soundOn ? "🔊 Sound On" : "🔇 Sound Off";
+      els.soundToggle.checked = appState.soundOn;
+    }
+
+    function randomizeSettings() {
+      const counts = [5, 10, 15, 20];
+      const timer = Math.floor(Math.random() * 26) + 5;
+      const questionCount = counts[Math.floor(Math.random() * counts.length)];
+
+      appState.soundOn = Math.random() > 0.35;
+      appState.shuffle = Math.random() > 0.2;
+      appState.timerSeconds = timer;
+      appState.questionCount = questionCount;
+
+      els.timerSeconds.value = timer;
+      els.questionCount.value = String(questionCount);
+      els.shuffleToggle.checked = appState.shuffle;
+      updateTimerLabel();
+      updateSoundUI();
+
+      appState.selectedCategories.clear();
+      builtInCategories.forEach(cat => {
+        if (Math.random() > 0.45) appState.selectedCategories.add(cat.id);
+      });
+      if (appState.selectedCategories.size === 0) {
+        appState.selectedCategories.add(builtInCategories[Math.floor(Math.random() * builtInCategories.length)].id);
+      }
+
+      renderCategoryCards(els.setupCategoryGrid, true);
+      setModeButtons();
+      playBlip("random");
+    }
+
+    function quickStart() {
+      appState.mode = "builtIn";
+      appState.selectedCategories.clear();
+      appState.questionCount = 10;
+      appState.timerSeconds = 15;
+      appState.shuffle = true;
+
+      els.questionCount.value = "10";
+      els.timerSeconds.value = "15";
+      els.shuffleToggle.checked = true;
+      updateTimerLabel();
+      setModeButtons();
+
+      startGame();
+    }
+
+    function shuffleArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function getSelectedBuiltInDeck() {
+      const chosen = appState.selectedCategories.size
+        ? builtInCategories.filter(cat => appState.selectedCategories.has(cat.id))
+        : builtInCategories;
+
+      let deck = chosen.flatMap(cat =>
+        cat.questions.map(item => ({
+          ...item,
+          categoryId: cat.id,
+          categoryName: cat.name
+        }))
+      );
+
+      if (appState.shuffle) deck = shuffleArray(deck);
+      return deck.slice(0, Math.min(appState.questionCount, deck.length));
+    }
+
+    function getCustomDeck() {
+      let deck = appState.customQuestions.map(item => ({
+        ...item,
+        categoryId: "custom",
+        categoryName: "Custom"
+      }));
+      if (appState.shuffle) deck = shuffleArray(deck);
+      return deck.slice(0, Math.min(appState.questionCount, deck.length));
+    }
+
+    function startGame() {
+      appState.questionCount = parseInt(els.questionCount.value, 10);
+      appState.timerSeconds = parseInt(els.timerSeconds.value, 10);
+      appState.shuffle = els.shuffleToggle.checked;
+      appState.soundOn = els.soundToggle.checked;
+      updateSoundUI();
+
+      const deck = appState.mode === "builtIn" ? getSelectedBuiltInDeck() : getCustomDeck();
+
+      if (appState.mode === "custom" && deck.length === 0) {
+        alert("Add at least one custom question before starting a custom game.");
+        showScreen("builder");
+        return;
+      }
+
+      if (deck.length === 0) {
+        alert("No questions available. Pick at least one category or use Quick Start.");
+        return;
+      }
+
+      appState.currentDeck = deck;
+      appState.currentIndex = 0;
+      appState.score = 0;
+      appState.answered = 0;
+      appState.choiceA = 0;
+      appState.choiceB = 0;
+      appState.history = [];
+      appState.currentQuestion = null;
+
+      showScreen("game");
+      renderCurrentQuestion();
+      playBlip("start");
+    }
+
+    function renderCurrentQuestion() {
+      clearGameSelectionButtons();
+
+      const total = appState.currentDeck.length;
+      const index = appState.currentIndex;
+
+      if (index >= total) {
+        endGame();
+        return;
+      }
+
+      const item = appState.currentDeck[index];
+      appState.currentQuestion = item;
+      appState.timeLeft = appState.timerSeconds;
+
+      els.scoreStat.textContent = String(appState.score);
+      els.questionStat.textContent = `${index + 1} / ${total}`;
+      els.modeStat.textContent = appState.mode === "builtIn" ? "Built-in" : "Custom";
+      els.categoryStat.textContent = appState.mode === "builtIn"
+        ? (appState.selectedCategories.size === 1
+          ? builtInCategories.find(c => c.id === [...appState.selectedCategories][0])?.name || "Mixed"
+          : appState.selectedCategories.size > 1 ? "Mixed" : "All")
+        : "Custom";
+
+      els.progressFill.style.width = `${((index) / total) * 100}%`;
+
+      els.questionModePill.textContent = appState.mode === "builtIn" ? "Built-in Game" : "Custom Game";
+      els.questionCategoryPill.textContent = `Category: ${item.categoryName}`;
+      els.questionTitle.textContent = item.q;
+      els.optionAText.textContent = item.a;
+      els.optionBText.textContent = item.b;
+      els.choiceACount.textContent = String(appState.choiceA);
+      els.choiceBCount.textContent = String(appState.choiceB);
+      els.timerDisplay.textContent = String(appState.timeLeft);
+      updateTimerChip();
+
+      startTimer();
+    }
+
+    function clearGameSelectionButtons() {
+      els.optionABtn.classList.remove("selected");
+      els.optionBBtn.classList.remove("selected");
+    }
+
+    function handleChoice(choice) {
+      if (!appState.currentQuestion) return;
+
+      stopTimer();
+
+      const isA = choice === "A";
+      appState.answered += 1;
+      appState.score += 1;
+
+      if (isA) {
+        appState.choiceA += 1;
+        els.optionABtn.classList.add("selected");
+      } else {
+        appState.choiceB += 1;
+        els.optionBBtn.classList.add("selected");
+      }
+
+      appState.history.push({
+        q: appState.currentQuestion.q,
+        picked: isA ? appState.currentQuestion.a : appState.currentQuestion.b,
+        category: appState.currentQuestion.categoryName,
+        timedOut: false
+      });
+
+      els.scoreStat.textContent = String(appState.score);
+      els.choiceACount.textContent = String(appState.choiceA);
+      els.choiceBCount.textContent = String(appState.choiceB);
+      playBlip("pick");
+
+      setTimeout(() => {
+        appState.currentIndex += 1;
+        renderCurrentQuestion();
+      }, 500);
+    }
+
+    function handleTimeout() {
+      stopTimer();
+
+      appState.history.push({
+        q: appState.currentQuestion.q,
+        picked: "No answer",
+        category: appState.currentQuestion.categoryName,
+        timedOut: true
+      });
+
+      playBlip("timeout");
+
+      setTimeout(() => {
+        appState.currentIndex += 1;
+        renderCurrentQuestion();
+      }, 450);
+    }
+
+    function startTimer() {
+      stopTimer();
+      appState.timeLeft = appState.timerSeconds;
+      els.timerDisplay.textContent = String(appState.timeLeft);
+      updateTimerChip();
+
+      appState.timer = setInterval(() => {
+        appState.timeLeft -= 1;
+        els.timerDisplay.textContent = String(appState.timeLeft);
+        updateTimerChip();
+
+        if (appState.timeLeft <= 3 && appState.timeLeft > 0) {
+          playBlip("tick");
+        }
+
+        if (appState.timeLeft <= 0) {
+          handleTimeout();
+        }
+      }, 1000);
+    }
+
+    function stopTimer() {
+      if (appState.timer) {
+        clearInterval(appState.timer);
+        appState.timer = null;
+      }
+    }
+
+    function updateTimerChip() {
+      els.timerChip.classList.remove("warning", "danger");
+      if (appState.timeLeft <= 6 && appState.timeLeft > 3) {
+        els.timerChip.classList.add("warning");
+      }
+      if (appState.timeLeft <= 3) {
+        els.timerChip.classList.add("danger");
+      }
+    }
+
+    function endGame() {
+      stopTimer();
+      els.progressFill.style.width = "100%";
+
+      els.finalScore.textContent = String(appState.score);
+      els.finalAnswered.textContent = `${appState.answered} / ${appState.currentDeck.length}`;
+      els.finalMode.textContent = appState.mode === "builtIn" ? "Built-in" : "Custom";
+      els.finalA.textContent = String(appState.choiceA);
+      els.finalB.textContent = String(appState.choiceB);
+
+      const mood = appState.answered === appState.currentDeck.length
+        ? "Perfect run. You answered every question."
+        : appState.answered >= Math.ceil(appState.currentDeck.length / 2)
+          ? "Solid game. You made it through most of the chaos."
+          : "That timer came for blood. Still fun though.";
+
+      const modeText = appState.mode === "builtIn"
+        ? "built-in category mix"
+        : "custom question deck";
+
+      els.resultsSummaryText.textContent = `You finished a ${modeText} with ${appState.answered} answers out of ${appState.currentDeck.length} total prompts. ${mood}`;
+
+      renderHistory();
+      showScreen("results");
+      playBlip("end");
+    }
+
+    function renderHistory() {
+      els.historyList.innerHTML = "";
+
+      if (!appState.history.length) {
+        els.historyList.innerHTML = `<div class="empty-state">No history yet.</div>`;
+        return;
+      }
+
+      appState.history.forEach((item, index) => {
+        const div = document.createElement("div");
+        div.className = "history-item fade-pop";
+        div.innerHTML = `
+          <div class="q">${index + 1}. ${item.q}</div>
+          <div class="a">${item.timedOut ? "⏰ Timed out" : "✅ Picked: " + item.picked}</div>
+          <div class="a" style="margin-top:6px;color:#cbd5e1;">Category: ${item.category}</div>
+        `;
+        els.historyList.appendChild(div);
+      });
+    }
+
+    function renderCustomList() {
+      els.customList.innerHTML = "";
+
+      if (!appState.customQuestions.length) {
+        els.customList.innerHTML = `
+          <div class="empty-state">
+            No custom questions yet. Add a question, save it, and it'll show up here.
+          </div>
+        `;
+        updateSetupCategoryStatus();
+        return;
+      }
+
+      appState.customQuestions.forEach((item, index) => {
+        const card = document.createElement("div");
+        card.className = "custom-item";
+        card.innerHTML = `
+          <div>
+            <h4>${item.q}</h4>
+            <p><strong>A:</strong> ${item.a}</p>
+            <p><strong>B:</strong> ${item.b}</p>
+          </div>
+          <button class="btn btn-bad" data-delete-index="${index}">Delete</button>
+        `;
+        els.customList.appendChild(card);
+      });
+
+      els.customList.querySelectorAll("[data-delete-index]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const index = parseInt(btn.getAttribute("data-delete-index"), 10);
+          appState.customQuestions.splice(index, 1);
+          saveCustomQuestions();
+          renderCustomList();
+          updateSetupCategoryStatus();
+          playBlip("delete");
+        });
+      });
+
+      updateSetupCategoryStatus();
+    }
+
+    function clearBuilderForm() {
+      els.customQuestionText.value = "";
+      els.customOptionA.value = "";
+      els.customOptionB.value = "";
+      updatePreview();
+    }
+
+    function updatePreview() {
+      els.livePreviewQuestion.textContent = els.customQuestionText.value.trim() || "Your question preview shows here.";
+      els.livePreviewA.textContent = els.customOptionA.value.trim() || "Option A preview";
+      els.livePreviewB.textContent = els.customOptionB.value.trim() || "Option B preview";
+    }
+
+    function saveCustomQuestion() {
+      const q = els.customQuestionText.value.trim();
+      const a = els.customOptionA.value.trim();
+      const b = els.customOptionB.value.trim();
+
+      if (!q || !a || !b) {
+        alert("Fill in the question and both options before saving.");
+        return;
+      }
+
+      appState.customQuestions.push({ q, a, b });
+      saveCustomQuestions();
+      renderCustomList();
+      clearBuilderForm();
+      playBlip("save");
+    }
+
+    function deleteAllCustomQuestions() {
+      if (!appState.customQuestions.length) return;
+      const ok = confirm("Delete all custom questions?");
+      if (!ok) return;
+
+      appState.customQuestions = [];
+      saveCustomQuestions();
+      renderCustomList();
+      updateSetupCategoryStatus();
+      playBlip("delete");
+    }
+
+    function playAgain() {
+      startGame();
+    }
+
+    function restartGame() {
+      if (!appState.currentDeck.length) return;
+      appState.currentIndex = 0;
+      appState.score = 0;
+      appState.answered = 0;
+      appState.choiceA = 0;
+      appState.choiceB = 0;
+      appState.history = [];
+      renderCurrentQuestion();
+      playBlip("start");
+    }
+
+    function playBlip(type = "pick") {
+      if (!appState.soundOn) return;
+
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = type === "timeout" ? "sawtooth" : type === "random" ? "triangle" : "sine";
+
+        let freq = 520;
+        let dur = 0.12;
+
+        if (type === "pick") { freq = 660; dur = 0.12; }
+        if (type === "start") { freq = 540; dur = 0.18; }
+        if (type === "save") { freq = 760; dur = 0.15; }
+        if (type === "delete") { freq = 240; dur = 0.14; }
+        if (type === "timeout") { freq = 180; dur = 0.22; }
+        if (type === "tick") { freq = 900; dur = 0.06; }
+        if (type === "end") { freq = 820; dur = 0.2; }
+        if (type === "random") { freq = 480; dur = 0.16; }
+
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.08, ctx.currentTime + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + dur + 0.02);
+
+        setTimeout(() => ctx.close(), 250);
+      } catch (e) {
+        // Silent fail by design
+      }
+    }
+
+    function bindEvents() {
+      els.goSetupBtn.addEventListener("click", () => {
+        showScreen("setup");
+      });
+
+      els.quickStartBtn.addEventListener("click", quickStart);
+      els.goBuilderBtn.addEventListener("click", () => showScreen("builder"));
+      els.homeTopBtn.addEventListener("click", goHome);
+      els.setupHomeBtn.addEventListener("click", goHome);
+      els.builderHomeBtn.addEventListener("click", goHome);
+      els.gameHomeBtn.addEventListener("click", goHome);
+      els.resultsHomeBtn.addEventListener("click", goHome);
+
+      els.soundTopBtn.addEventListener("click", () => {
+        appState.soundOn = !appState.soundOn;
+        updateSoundUI();
+      });
+
+      els.timerSeconds.addEventListener("input", updateTimerLabel);
+      els.soundToggle.addEventListener("change", () => {
+        appState.soundOn = els.soundToggle.checked;
+        updateSoundUI();
+      });
+      els.shuffleToggle.addEventListener("change", () => {
+        appState.shuffle = els.shuffleToggle.checked;
+      });
+      els.questionCount.addEventListener("change", () => {
+        appState.questionCount = parseInt(els.questionCount.value, 10);
+      });
+
+      els.randomizeBtn.addEventListener("click", randomizeSettings);
+      els.startGameBtn.addEventListener("click", startGame);
+      els.setupBuilderBtn.addEventListener("click", () => showScreen("builder"));
+
+      els.builtInModeBtn.addEventListener("click", () => {
+        appState.mode = "builtIn";
+        setModeButtons();
+      });
+
+      els.customModeBtn.addEventListener("click", () => {
+        appState.mode = "custom";
+        setModeButtons();
+      });
+
+      els.customQuestionText.addEventListener("input", updatePreview);
+      els.customOptionA.addEventListener("input", updatePreview);
+      els.customOptionB.addEventListener("input", updatePreview);
+      els.saveCustomBtn.addEventListener("click", saveCustomQuestion);
+      els.clearBuilderFormBtn.addEventListener("click", clearBuilderForm);
+      els.deleteAllCustomBtn.addEventListener("click", deleteAllCustomQuestions);
+
+      els.builderPlayBtn.addEventListener("click", () => {
+        appState.mode = "custom";
+        setModeButtons();
+        showScreen("setup");
+      });
+
+      els.optionABtn.addEventListener("click", () => handleChoice("A"));
+      els.optionBBtn.addEventListener("click", () => handleChoice("B"));
+
+      els.restartGameBtn.addEventListener("click", restartGame);
+      els.playAgainBtn.addEventListener("click", playAgain);
+      els.resultsSetupBtn.addEventListener("click", () => showScreen("setup"));
+    }
+
+    function init() {
+      loadCustomQuestions();
+      renderCategoryCards(els.homeCategoryGrid, false);
+      renderCategoryCards(els.setupCategoryGrid, true);
+      renderCustomList();
+      updatePreview();
+      updateTimerLabel();
+      updateSoundUI();
+      setModeButtons();
+      bindEvents();
+      createSparkles();
+    }
+
+    init();
+  </script>
+</body>
+</html>
